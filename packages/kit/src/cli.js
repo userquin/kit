@@ -4,6 +4,7 @@ import colors from 'kleur';
 import * as ports from 'port-authority';
 import { load_config } from './core/config/index.js';
 import { networkInterfaces, release } from 'os';
+import { resolveConfig } from 'vite';
 
 async function get_config() {
 	// TODO this is temporary, for the benefit of early adopters
@@ -103,6 +104,24 @@ prog
 		}
 	});
 
+/** @param {any} config */
+async function regeneratePWA(config) {
+	let viteConfig;
+	if (typeof config.kit.vite === 'function') {
+		viteConfig = config.kit.vite();
+	} else {
+		viteConfig = config.kit.vite || {};
+	}
+
+	viteConfig = await resolveConfig(viteConfig, 'build', process.env.NODE_ENV);
+	const pwaPlugin = viteConfig.plugins.find(i => i.name === 'vite-plugin-pwa');
+
+	if (pwaPlugin && pwaPlugin.api) {
+		console.log(colors.bold().green('\nRegenerating PWA...'));
+		await pwaPlugin.api.generateSW();
+	}
+}
+
 prog
 	.command('build')
 	.describe('Create a production build of your app')
@@ -123,11 +142,15 @@ prog
 				const { adapt } = await import('./core/adapt/index.js');
 				await adapt(config, build_data, { verbose });
 
+				await regeneratePWA(config);
+
 				// this is necessary to close any open db connections, etc
 				process.exit(0);
 			}
 
 			console.log(colors.bold().yellow('\nNo adapter specified'));
+
+			await regeneratePWA(config);
 
 			// prettier-ignore
 			console.log(

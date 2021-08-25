@@ -11,6 +11,8 @@
 	"devDependencies": {
 		"@sveltejs/adapter-netlify": "workspace:*",
 		"@sveltejs/kit": "workspace:*",
-		"svelte": "^3.40.0"
+		"svelte": "^3.40.0",
+		"vite-plugin-pwa": "^0.11.2",
+		"workbox-window": "^6.2.4"
 	}
 }
